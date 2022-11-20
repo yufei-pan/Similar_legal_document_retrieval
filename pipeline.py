@@ -27,6 +27,10 @@ class Pipeline:
             self.d2v_vec = np.load('d2v_vec.pkl.npy')
             self.bert_vec = np.load('bert_vec.pkl.npy')
 
+            print("TF-IDF",self.tfidf_vec.shape, self.tfidf_vec[0].shape)
+            print("Doc2Vec",self.d2v_vec.shape, self.d2v_vec[0].shape)
+            print("BERT",self.bert_vec.shape, self.bert_vec[0].shape)
+
         self.read_doc()
 
 
@@ -41,11 +45,9 @@ class Pipeline:
         self.df_target = summarize_pipeline(self.df_target)
         self.df_target = summarize_summa(self.df_target)
 
-        # self.doc_d2v = doc2vec(self.df_target)
+        self.doc_d2v = doc2vec(self.df_target, single_doc=True)
         self.doc_tfidf = tfidf(self.df_target, single_doc=True)
-        self.doc_bert = bert(self.df_target)
-
-        print(self.doc_tfidf.shape)
+        self.doc_bert = bert(self.df_target, single_doc=True)
         
 
 
@@ -55,14 +57,20 @@ class Pipeline:
         self.df = summarize_pipeline(self.df)
         self.df = summarize_summa(self.df)
 
-        self.d2v_vec = doc2vec(self.df)
-        self.tfidf_vec = tfidf(self.df)
-        self.bert_vec = bert(self.df)
+        self.d2v_vec = doc2vec(self.df, single_doc=False)
+        self.tfidf_vec = tfidf(self.df, single_doc=False)
+        self.bert_vec = bert(self.df, single_doc=False)
+
+        print("CHECKING......")
+        print("TF-IDF",self.tfidf_vec.shape, self.tfidf_vec[0].shape)
+        print("Doc2Vec",self.d2v_vec.shape, self.d2v_vec[0].shape)
+        print("BERT",self.bert_vec.shape, self.bert_vec[0].shape)
 
 
         np.save('d2v_vec.pkl', self.d2v_vec)
         np.save('tfidf_vec.pkl', self.tfidf_vec)
         np.save('bert_vec.pkl', self.bert_vec)
+
 
         # save df to pickle
         self.df.to_pickle('data_first15.pkl')
@@ -84,7 +92,7 @@ class Pipeline:
         print(related_docs_indices)
 
 
-pipeline_obj = Pipeline('check.txt', 'data/all_year.pkl.zst', run_type=False)
+pipeline_obj = Pipeline('check.txt', 'data/all_year.pkl.zst', run_type=True)
 pipeline_obj.get_similar_documents()
         
 

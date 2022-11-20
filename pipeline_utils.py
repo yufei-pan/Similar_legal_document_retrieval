@@ -192,21 +192,32 @@ def summarize_summa(df):
 
 
 def concat_vectors(text_vector, transformer_vector, summa_vector):
-    return np.concatenate((text_vector, transformer_vector, summa_vector), axis=0)
+    return np.concatenate([text_vector, transformer_vector, summa_vector],axis=0)
 
-def combined_vectors(text_vec, transformer_vec, summa_vector):
-    print("CHECKKKKK ",text_vec.shape, transformer_vec.shape, summa_vector.shape, type(transformer_vec), type(summa_vector), type(text_vec))
+def combined_vectors(text_vec, transformer_vec, summa_vector, single_vec):
+    
+    #transform vec to numpy array
+    if type(transformer_vec) != np.ndarray:
+        transformer_vec = transformer_vec.toarray()
+    if type(summa_vector) != np.ndarray:
+        summa_vector = summa_vector.toarray()
+    if type(text_vec) != np.ndarray:
+        text_vec = text_vec.toarray()
+
+    # print("CHECKKKKK ",text_vec.shape, transformer_vec.shape, summa_vector.shape, type(transformer_vec), type(summa_vector), type(text_vec))
     combined_vectors = list()
-    #transform transformer_vec to numpy array
-    # transformer_vec = np.array(transformer_vec)
-    print(transformer_vec.shape)
-    combined_vectors = concat_vectors(text_vec, transformer_vec, summa_vector)
-
-    print("combined_vectors ", combined_vectors.shape)
-    # for i in range(len(transformer_vec)):
-    #     combined_vectors.append(concat_vectors(text_vec[i], transformer_vec[i], summa_vector[i]))
+    
+    # print("CHECKKKKK111111 ",text_vec.shape, transformer_vec.shape, summa_vector.shape, type(transformer_vec), type(summa_vector), type(text_vec))
+    if single_vec:
+        combined_vectors = concat_vectors(text_vec[0], transformer_vec[0], summa_vector[0])
+    else:
+        for i in range(len(transformer_vec)):
+            combined_vectors.append(concat_vectors(text_vec[i], transformer_vec[i], summa_vector[i]))
+    
 
     combined_vectors = np.array(combined_vectors)
+
+    print("combined_vectors ", combined_vectors[0].shape, combined_vectors.shape)
     return combined_vectors
 
 
@@ -214,7 +225,7 @@ def combined_vectors(text_vec, transformer_vec, summa_vector):
 
 # In[40]:
 
-def doc2vec(df):
+def doc2vec(df, single_doc):
     def tagged_document(list_of_list_of_words):
         for i, list_of_words in enumerate(list_of_list_of_words):
                 yield gensim.models.doc2vec.TaggedDocument(list_of_words, [i])
@@ -233,6 +244,9 @@ def doc2vec(df):
             # tokens = list(filter(lambda x: x in model.wv.vocab.keys(), document))
             vector = model.infer_vector(document.words.split())
             vectors.append(vector)
+
+        # convert to numpy array
+        vectors = np.array(vectors)
 
         # scores = cosine_similarity([base_vector], vectors).flatten()
 
@@ -257,7 +271,7 @@ def doc2vec(df):
     transformer_vec = process_doc2vec_similarity(df['summary_pipeline'])
     summa_vector = process_doc2vec_similarity(df['summary_summa'])
 
-    doc2vec_vectors = combined_vectors(text_vec, transformer_vec, summa_vector)
+    doc2vec_vectors = combined_vectors(text_vec, transformer_vec, summa_vector, single_doc)
     return doc2vec_vectors
 
 
@@ -286,10 +300,6 @@ def doc2vec(df):
 # In[34]:
 
 def tfidf(df, single_doc):
-
-    
-
-
     def vectorize_tfidf(X, num_features=1500):
         tfidf=TfidfVectorizer(min_df = 0.01, max_df=0.95, ngram_range = (1,3), max_features=num_features, norm='l2')
         #tfidf=TfidfVectorizer(ngram_range = (1,3), max_features=num_features, norm='l2')
@@ -301,9 +311,7 @@ def tfidf(df, single_doc):
 
         if single_doc:
             transformer = pickle.load(open("tfidf_model.pkl", "rb"))
-            print(type(transformer))
             X_data = transformer.transform(X)
-            print("#####",X_data.shape)
         else:
             X_data = vectorize_tfidf(X,num_features)
 
@@ -315,10 +323,9 @@ def tfidf(df, single_doc):
     text_vec = process_tfidf_similarity(df['final_text'])
     transformer_vec = process_tfidf_similarity(df['summary_pipeline'])
     summa_vector = process_tfidf_similarity(df['summary_summa'])
-    print("FLAGGGGGGGGG")
-    print(text_vec.shape, transformer_vec.shape, summa_vector.shape)
 
-    tfidf_vectors = combined_vectors(text_vec, transformer_vec, summa_vector)
+
+    tfidf_vectors = combined_vectors(text_vec, transformer_vec, summa_vector, single_doc)
     return tfidf_vectors
 
 
@@ -345,7 +352,7 @@ def tfidf(df, single_doc):
 
 # In[42]:
 
-def bert(df):
+def bert(df, single_doc):
     def bert_similarity(X):
         model = SentenceTransformer('bert-base-nli-mean-tokens')
         sentences = X
@@ -365,7 +372,7 @@ def bert(df):
     transformer_vec = bert_similarity(df['summary_pipeline'])
     summa_vector = bert_similarity(df['summary_summa'])
 
-    bert_vectors = combined_vectors(text_vec, transformer_vec, summa_vector)
+    bert_vectors = combined_vectors(text_vec, transformer_vec, summa_vector, single_doc)
     return bert_vectors
 
 
