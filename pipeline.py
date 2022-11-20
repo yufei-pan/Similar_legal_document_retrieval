@@ -61,7 +61,7 @@ class Pipeline:
         self.tfidf_vec = tfidf(self.df, single_doc=False)
         self.bert_vec = bert(self.df, single_doc=False)
 
-        print("CHECKING......")
+        print("CHECKING.....")
         print("TF-IDF",self.tfidf_vec.shape, self.tfidf_vec[0].shape)
         print("Doc2Vec",self.d2v_vec.shape, self.d2v_vec[0].shape)
         print("BERT",self.bert_vec.shape, self.bert_vec[0].shape)
