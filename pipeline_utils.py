@@ -23,7 +23,7 @@ from sklearn.metrics.pairwise import linear_kernel
 
 # ! conda install -c conda-forge sentence-transformers
 
-from sentence_transformers import SentenceTransformer
+from sentence_transformers import SentenceTransformer, util
 from transformers import pipeline
 from summa import summarizer
 

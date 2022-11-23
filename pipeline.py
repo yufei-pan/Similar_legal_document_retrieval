@@ -7,6 +7,7 @@ import numpy as np
 import re
 import nltk
 from sklearn.metrics.pairwise import linear_kernel
+from transformers import pipeline
 
 from pipeline_utils import *
 
@@ -19,7 +20,7 @@ class Pipeline:
         
         if self.run_type:
             print('Reading data')
-            self.df = read_data(self.path_to_zst)[:15]
+            self.df = read_data(self.path_to_zst)
             self.preprocess_data()
         else:
             # read pkl file as dataframe
@@ -53,13 +54,20 @@ class Pipeline:
 
 
     def preprocess_data(self):
+        print("Preprocessing data")
         self.df = final_preprocessing(self.df)
 
+        print("Summarizing data")
         self.df = summarize_pipeline(self.df)
         self.df = summarize_summa(self.df)
 
+        print("Doc2Vec")
         self.d2v_vec = doc2vec(self.df, single_doc=False)
+
+        print("TF-IDF")
         self.tfidf_vec = tfidf(self.df, single_doc=False)
+
+        print("BERT")
         self.bert_vec = bert(self.df, single_doc=False)
 
         print("CHECKING......")
@@ -74,7 +82,7 @@ class Pipeline:
 
 
         # save df to pickle
-        self.df.to_pickle('data_first15.pkl')
+        self.df.to_pickle('data.pkl')
 
 
     def get_similar_documents(self):
@@ -86,32 +94,46 @@ class Pipeline:
  
         print("TF-IDF SIMILARITY")
         cosine_similarities_tfidf = cosine_similarity(self.doc_tfidf, self.tfidf_vec).flatten()
-        related_docs_tfidf = cosine_similarities_tfidf.argsort()
-        # [-5:][::-1]
+        related_docs_tfidf = cosine_similarities_tfidf.argsort()[-5:][::-1]
         print(related_docs_tfidf)
 
 
         print("Doc2Vec SIMILARITY")
         cosine_similarities_d2v = cosine_similarity(self.doc_d2v, self.d2v_vec).flatten()
-        related_docs_d2v = cosine_similarities_d2v.argsort()
-        # [-5:][::-1]
+        related_docs_d2v = cosine_similarities_d2v.argsort()[-5:][::-1]
         print(related_docs_d2v)
 
 
         print("BERT SIMILARITY")
         cosine_similarities_bert = cosine_similarity(self.doc_bert, self.bert_vec)[0]
-        related_docs_bert = cosine_similarities_bert.argsort()
-        # [-5:][::-1]
+        related_docs_bert = cosine_similarities_bert.argsort()[-5:][::-1]
         print(related_docs_bert)
 
 
 if __name__ == '__main__':
-    pipeline_obj = Pipeline('check.txt', 'data/all_year.pkl.zst', run_type=False)
+    pipeline_obj = Pipeline('check1.txt', 'data/all_year.pkl.zst', run_type=True)
     pipeline_obj.get_similar_documents()
+    
             
 
         
 
-    
+"""
+TF-IDF SIMILARITY
+[ 0  8 12  5 14]
+Doc2Vec SIMILARITY
+[11 10 12 13  5]
+BERT SIMILARITY
+[ 0 14  1  5  6]
+"""
+
+"""
+TF-IDF SIMILARITY
+[ 0  8  5 14 12]
+Doc2Vec SIMILARITY
+[11 10 13 12  9]
+BERT SIMILARITY
+[ 0  6  5 14  2]
+"""
 
 
