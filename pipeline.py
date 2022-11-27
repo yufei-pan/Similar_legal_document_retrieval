@@ -20,11 +20,11 @@ class Pipeline:
         
         if self.run_type:
             print('Reading data')
-            self.df = read_data(self.path_to_zst)
+            self.df = read_data(self.path_to_zst)[:15]
             self.preprocess_data()
         else:
             # read pkl file as dataframe
-            self.df = pd.read_pickle('data_first15.pkl')
+            self.df = pd.read_pickle('data15_2.pkl')
             self.tfidf_vec = np.load('tfidf_vec.pkl.npy')
             self.d2v_vec = np.load('d2v_vec.pkl.npy')
             self.bert_vec = np.load('bert_vec.pkl.npy')
@@ -82,7 +82,7 @@ class Pipeline:
 
 
         # save df to pickle
-        self.df.to_pickle('data.pkl')
+        self.df.to_pickle('data15_2.pkl')
 
 
     def get_similar_documents(self):
@@ -94,24 +94,49 @@ class Pipeline:
  
         print("TF-IDF SIMILARITY")
         cosine_similarities_tfidf = cosine_similarity(self.doc_tfidf, self.tfidf_vec).flatten()
-        related_docs_tfidf = cosine_similarities_tfidf.argsort()[-5:][::-1]
-        print(related_docs_tfidf)
+        related_docs_tfidf = cosine_similarities_tfidf.argsort()
+        print(related_docs_tfidf, sorted(cosine_similarities_tfidf))
 
 
         print("Doc2Vec SIMILARITY")
         cosine_similarities_d2v = cosine_similarity(self.doc_d2v, self.d2v_vec).flatten()
-        related_docs_d2v = cosine_similarities_d2v.argsort()[-5:][::-1]
-        print(related_docs_d2v)
+        related_docs_d2v = cosine_similarities_d2v.argsort()
+        print(related_docs_d2v, sorted(cosine_similarities_d2v))
 
 
         print("BERT SIMILARITY")
         cosine_similarities_bert = cosine_similarity(self.doc_bert, self.bert_vec)[0]
-        related_docs_bert = cosine_similarities_bert.argsort()[-5:][::-1]
-        print(related_docs_bert)
+        related_docs_bert = cosine_similarities_bert.argsort()
+        print(related_docs_bert, sorted(cosine_similarities_bert))
+
+        # calculate the avergae of each doc2vec and bert cosine similarity
+        # and return the index of the document with the highest average
+        avg_sim = (cosine_similarities_d2v + cosine_similarities_bert)/2
+
+
+        print(self.final_result(related_docs_tfidf, related_docs_d2v, related_docs_bert, cosine_similarities_tfidf, cosine_similarities_d2v, cosine_similarities_bert))
+
+    def final_result(self, tfidf, d2v, bert, tfidf_scores, d2v_scores, bert_scores):
+        # get average similarity score for each document
+        rank = []
+        for i in range(len(tfidf)):
+            index_tfidfi = tfidf.tolist().index(i)
+            index_d2v = d2v.tolist().index(i)
+            index_bert = bert.tolist().index(i)
+            
+            avg_score = (tfidf_scores[index_tfidfi] + d2v_scores[index_d2v] + bert_scores[index_bert])/3
+            rank.append([i,avg_score])
+
+        # sort the list by the average score
+        rank = sorted(rank, key=lambda x: x[1], reverse=True)
+        
+        return rank[:5]
+
+    # def dummy_reference(self):
 
 
 if __name__ == '__main__':
-    pipeline_obj = Pipeline('check1.txt', 'data/all_year.pkl.zst', run_type=True)
+    pipeline_obj = Pipeline('check.txt', 'data/all_year.pkl.zst', run_type=False)
     pipeline_obj.get_similar_documents()
     
             
@@ -125,6 +150,14 @@ Doc2Vec SIMILARITY
 [11 10 12 13  5]
 BERT SIMILARITY
 [ 0 14  1  5  6]
+
+
+TF-IDF SIMILARITY
+[ 0  8 12 14  1]
+Doc2Vec SIMILARITY
+[10  8 11 13  9]
+BERT SIMILARITY
+[ 0 14  1  2  5]
 """
 
 """
@@ -137,3 +170,25 @@ BERT SIMILARITY
 """
 
 
+
+"""
+orignial
+
+TF-IDF SIMILARITY
+[ 0 36 46 15 40]
+Doc2Vec SIMILARITY
+[53 21 10  5 85]
+BERT SIMILARITY
+[ 0 36 27 34 46]
+"""
+
+"""
+paraphraded
+
+TF-IDF SIMILARITY
+[ 0 46 36 15  8]
+Doc2Vec SIMILARITY
+[53 21 85 59 61]
+BERT SIMILARITY
+[ 0 34 46 27 36]
+"""

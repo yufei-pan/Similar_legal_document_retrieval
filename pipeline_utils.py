@@ -191,7 +191,7 @@ def summarize_summa(df):
 # In[36]:
 
 def concat_vectors(text_vector, transformer_vector, summa_vector):
-    return np.concatenate([text_vector, transformer_vector, summa_vector],axis=0)
+    return np.concatenate([transformer_vector, summa_vector],axis=0)
 
 def combined_vectors(text_vec, transformer_vec, summa_vector, single_vec):
     
